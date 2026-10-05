@@ -49,7 +49,7 @@ jobs:
 
     steps:
       - name: Run Application
-        run: java -cp target/classes example.com.javacode
+        run: java -cp target/classes employee.management.main_file
 
       - name: Deploy Application
         run: echo "Employee Deployment Successful"
