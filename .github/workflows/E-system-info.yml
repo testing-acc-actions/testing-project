@@ -1,0 +1,24 @@
+name: System Information
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  info:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - run: whoami
+
+      - run: pwd
+
+      - run: date
+
+      - run: java -version
+
+      - run: mvn -v
+
+      - run: uname -a
