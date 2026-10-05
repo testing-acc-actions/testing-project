@@ -42,11 +42,19 @@ jobs:
         run: echo "Employee Validation Successful"
 
   deploy:
+  needs: test
 
-    needs: test
+  runs-on: ubuntu-latest
 
-    runs-on: ubuntu-latest
+  steps:
 
-    steps:
-      - name: Deploy Application
-        run: echo "Employee Deployment Successful"
+    - name: Deploy Application
+      run: echo "Employee Deployment Successful"
+
+    - name: Download Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: release
+
+    - name: Verify Download
+      run: ls -la
