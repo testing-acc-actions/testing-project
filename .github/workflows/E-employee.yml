@@ -43,7 +43,7 @@ jobs:
         run: echo "Employee Deployment Successful"
 
       - name: Run Application
-        run: java -cp target/classes example.com.javacode
+        run: java -cp target/classes employee.management.main-file
       
       - name: upload artifact
         uses: actions/upload-artifact@v4
