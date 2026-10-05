@@ -41,3 +41,12 @@ jobs:
 
       - name: Deploy Application
         run: echo "Employee Deployment Successful"
+
+      - name: Run Application
+        run: java -cp target/classes example.com.javacode
+      
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: target/*.jar
