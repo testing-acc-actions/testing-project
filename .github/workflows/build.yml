@@ -21,7 +21,7 @@ jobs:
         run: mvn clean package
 
       - name: Run Application
-        run: java -cp target/classes example.code.javacode
+        run: java -cp target/classes example.code.java
       
       - name: upload artifact
         uses: actions/upload-artifact@v4
