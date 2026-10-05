@@ -21,7 +21,7 @@ jobs:
       - name: Build
         run: mvn clean package
 
-  test:
+  testing:
 
     needs: build
 
