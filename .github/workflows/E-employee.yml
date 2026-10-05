@@ -1,1 +1,23 @@
+name: Employee Pipeline
 
+on:
+  workflow_dispatch:
+
+jobs:
+
+  employee_job:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: mvn clean package
+
+      - run: java -cp target/classes employee.management.main_file
