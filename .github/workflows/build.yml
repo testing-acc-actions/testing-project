@@ -26,3 +26,5 @@ jobs:
         with:
           name: release
           path: target/*.jar
+      - name: Run Application
+       - run: java -cp target/classes com.example.App
