@@ -1,9 +1,7 @@
 name: Production Build yml
 
 on:
-  push:
-    branches:
-      - main
+ workflow_dispatch:
 
 jobs:
 
