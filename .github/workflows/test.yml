@@ -34,4 +34,3 @@ jobs:
       - run: pwd
       - run: java -version
       - run: mvn -v
-      -
