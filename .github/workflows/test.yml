@@ -1,0 +1,37 @@
+name: Production Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: mvn clean package
+      - run: mvn package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: target/*.jar
+          
+  
+      - run: echo "hello"
+      - run: ls -la
+      - run: pwd
+      - run: java -version
+      - run: mvn -v
+      -
