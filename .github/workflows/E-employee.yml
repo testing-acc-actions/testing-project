@@ -29,6 +29,6 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-  steps:
+    steps:
     - name: Deploy appication
     run: echo "Employee Validation Successful"
