@@ -1,6 +1,6 @@
-package com.example;
+package example.com;
 
-public class App {
+public class javacode {
 
     public static void main(String[] args) {
 
