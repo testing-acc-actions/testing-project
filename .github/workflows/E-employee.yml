@@ -48,6 +48,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Run Application
+        run: java -cp target/classes example.com.javacode
 
       - name: Deploy Application
         run: echo "Employee Deployment Successful"
