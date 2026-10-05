@@ -19,16 +19,25 @@ jobs:
           java-version: 17
 
       - run: mvn clean package
+
   test:
-   needs : Build
-   runs-on: ubuntu-latest
-   steps:
-   - name: Employee Validation
-   run: echo "Employee Validation Successful"
-    
-  deploy:
-    needs: test
+
+    needs: Build
+
     runs-on: ubuntu-latest
+
     steps:
-    - name: Deploy appication
-    run: echo "Employee Validation Successful"
+
+      - name: Employee Validation
+        run: echo "Employee Validation Successful"
+
+  deploy:
+
+    needs: test
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Deploy Application
+        run: echo "Employee Deployment Successful"
