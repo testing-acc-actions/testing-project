@@ -22,7 +22,6 @@ jobs:
 
       - name: Run Application
         run: java -cp target/classes example.code.javacode
-        code
       
       - name: upload artifact
         uses: actions/upload-artifact@v4
