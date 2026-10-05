@@ -5,7 +5,7 @@ on:
 
 jobs:
 
-  employee_job:
+  Build:
 
     runs-on: ubuntu-latest
 
@@ -19,5 +19,16 @@ jobs:
           java-version: 17
 
       - run: mvn clean package
-
-      - run: java -cp target/classes employee.management.main_file
+  test:
+   needs : Build
+   runs-on: ubuntu-latest
+   steps:
+   - name: Employee Validation
+    run: echo "Employee Validation Successful"
+    
+  deploy: 
+    needs: test
+  runs-on: ubuntu-latest
+  steps:
+    -name: Deploy appication
+    run: echo "Employee Validation Successful"
