@@ -1,4 +1,4 @@
-name: Production Build
+name: Production yml build
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
 
-  build:
+  test_yml:
 
     runs-on: ubuntu-latest
 
