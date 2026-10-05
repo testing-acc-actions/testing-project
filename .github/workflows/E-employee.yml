@@ -24,11 +24,11 @@ jobs:
    runs-on: ubuntu-latest
    steps:
    - name: Employee Validation
-    run: echo "Employee Validation Successful"
+   run: echo "Employee Validation Successful"
     
-  deploy: 
+  deploy:
     needs: test
-  runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
   steps:
-    -name: Deploy appication
+    - name: Deploy appication
     run: echo "Employee Validation Successful"
