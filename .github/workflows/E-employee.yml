@@ -18,7 +18,17 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - run: mvn clean package
+      - name: Build Project
+        run: mvn clean package
+
+      - name: Run Application
+        run: java -cp target/classes employee.management.main_file
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: target/*.jar
 
   test:
 
@@ -41,12 +51,4 @@ jobs:
 
       - name: Deploy Application
         run: echo "Employee Deployment Successful"
-
-      - name: Run Application
-        run: java -cp target/classes employee.management.main_file
-      
-      - name: upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: release
-          path: target/*.jar
+`
