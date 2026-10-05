@@ -2,7 +2,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>employee-management</groupId>
+    <groupId>employee.management</groupId>
 
     <artifactId>github-actions-demo</artifactId>
 
