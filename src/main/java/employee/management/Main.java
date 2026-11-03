@@ -10,6 +10,10 @@ public class Main {
     private static final String APP_VERSION = "1.0.0";
     private static final int PORT = 8080;
 
+    public static String getApplicationVersion() {
+        return APP_VERSION;
+    }
+
     public static void main(String[] args) throws IOException {
 
         HttpServer server = HttpServer.create(
@@ -19,7 +23,7 @@ public class Main {
         server.createContext("/", exchange -> {
             String response =
                 "Employee Management Application\n" +
-                "Application Version: " + APP_VERSION + "\n" +
+                "Application Version: " + getApplicationVersion() + "\n" +
                 "Status: RUNNING\n";
 
             byte[] responseBytes =
@@ -38,7 +42,7 @@ public class Main {
 
         server.createContext("/version", exchange -> {
             byte[] responseBytes =
-                APP_VERSION.getBytes(StandardCharsets.UTF_8);
+                getApplicationVersion().getBytes(StandardCharsets.UTF_8);
 
             exchange.getResponseHeaders().set(
                 "Content-Type", "text/plain; charset=UTF-8"
