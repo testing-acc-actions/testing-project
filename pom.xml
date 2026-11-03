@@ -29,6 +29,14 @@
         </dependency>
     </dependencies>
 
+    <distributionManagement>
+        <repository>
+            <id>employee-management-domain-employee-management-repo</id>
+            <name>Employee Management CodeArtifact Repository</name>
+            <url>https://employee-management-domain-466210119847.d.codeartifact.ap-south-1.amazonaws.com/maven/employee-management-repo/</url>
+        </repository>
+    </distributionManagement>
+
     <build>
         <plugins>
             <plugin>
