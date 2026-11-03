@@ -1,33 +1,40 @@
-name: Build and Test
+name: Java Build and Test
 
 on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-
-  build:
-
+  build-and-test:
+    name: Build and Test Java Application
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: '17'
+          cache: maven
 
-      - name: Build
-        run: mvn clean package
+      - name: Build and run tests
+        run: mvn --batch-mode clean verify
 
-  testing:
-
-    needs: build
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - name: Application Test
-        run: echo "Testing completed successfully"
+      - name: Upload application JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: employee-management-app-${{ github.sha }}
+          path: target/employee-management-app-1.0.0.jar
+          if-no-files-found: error
+          retention-days: 7
