@@ -128,3 +128,17 @@ jobs:
           path: target/employee-management-app-${{ steps.project.outputs.version }}.jar
           if-no-files-found: error
           retention-days: 7
+      - name: Prepare CodeDeploy deployment bundle
+        run: |
+          chmod +x scripts/*.sh
+
+          mkdir -p deployment
+
+          cp appspec.yml deployment/
+          cp target/employee-management-app-${{ steps.project.outputs.version }}.jar \
+            deployment/employee-management-app.jar
+
+          cp -r scripts deployment/
+
+          cd deployment
+          zip -r ../employee-management-deployment.zip .
