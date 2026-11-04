@@ -15,8 +15,16 @@ jobs:
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::466210119847:role/vpc-main
+          role-to-assume: arn:aws:iam::466210119847:role/github-java-deployment-role
           aws-region: ap-south-1
 
       - name: Verify AWS identity
         run: aws sts get-caller-identity
+
+      - name: Verify CodeArtifact access
+        run: |
+          aws codeartifact get-repository-endpoint \
+            --domain employee-management-domain \
+            --repository employee-management-repo \
+            --format maven \
+            --region ap-south-1
