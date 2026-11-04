@@ -142,3 +142,10 @@ jobs:
 
           cd deployment
           zip -r ../employee-management-deployment.zip .
+
+      - name: Upload CodeDeploy bundle to S3
+        if: github.event_name != 'pull_request'
+        run: |
+          aws s3 cp employee-management-deployment.zip \
+            s3://employee-management-deployment-466210119847/employee-management-app/${{ github.sha }}/employee-management-deployment.zip \
+            --region ap-south-1
