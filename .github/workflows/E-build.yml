@@ -76,6 +76,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: employee-management-app-${{ github.sha }}
-          path: target/employee-management-app-1.0.0.jar
+          path: target/employee-management-app-1.0.1.jar
           if-no-files-found: error
           retention-days: 7
