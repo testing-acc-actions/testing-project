@@ -3,6 +3,7 @@ set -e
 
 APP_DIR="/opt/employee-management-app"
 APP_JAR="${APP_DIR}/employee-management-app.jar"
+APP_USER="employeeapp"
 
 echo "Configuring application permissions..."
 
@@ -11,7 +12,10 @@ if [ ! -f "$APP_JAR" ]; then
     exit 1
 fi
 
-chown root:root "$APP_JAR"
-chmod 644 "$APP_JAR"
+chown "$APP_USER:$APP_USER" "$APP_DIR"
+chmod 755 "$APP_DIR"
 
-echo "Application JAR permissions configured."
+chown "$APP_USER:$APP_USER" "$APP_JAR"
+chmod 640 "$APP_JAR"
+
+echo "Application permissions configured successfully."
