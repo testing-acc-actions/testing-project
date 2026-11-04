@@ -149,3 +149,43 @@ jobs:
           aws s3 cp employee-management-deployment.zip \
             s3://employee-management-deployment-466210119847/employee-management-app/${{ github.sha }}/employee-management-deployment.zip \
             --region ap-south-1
+      - name: Deploy application to EC2
+        if: github.event_name != 'pull_request'
+        id: deploy
+        run: |
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name employee-management-app \
+            --deployment-group-name employee-management-ec2-group \
+            --s3-location bucket=employee-management-deployment-466210119847,key=employee-management-app/${{ github.sha }}/employee-management-deployment.zip,bundleType=zip \
+            --file-exists-behavior OVERWRITE \
+            --description "GitHub Actions deployment ${{ github.sha }}" \
+            --region ap-south-1 \
+            --query deploymentId \
+            --output text)
+
+          echo "Deployment ID: $DEPLOYMENT_ID"
+
+          for attempt in $(seq 1 60); do
+            STATUS=$(aws deploy get-deployment \
+              --deployment-id "$DEPLOYMENT_ID" \
+              --region ap-south-1 \
+              --query deploymentInfo.status \
+              --output text)
+
+            echo "Attempt $attempt: $STATUS"
+
+            if [ "$STATUS" = "Succeeded" ]; then
+              echo "Deployment completed successfully."
+              exit 0
+            fi
+
+            if [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Stopped" ]; then
+              echo "::error::Deployment failed: $STATUS"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "::error::Deployment timed out."
+          exit 1
