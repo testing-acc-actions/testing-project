@@ -4,6 +4,7 @@ set -e
 SERVICE_NAME="employee-management-app"
 APP_DIR="/opt/employee-management-app"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
+APP_USER="employeeapp"
 
 echo "Creating systemd service..."
 
@@ -14,7 +15,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=root
+User=${APP_USER}
 WorkingDirectory=${APP_DIR}
 ExecStart=/usr/bin/java -jar ${APP_DIR}/employee-management-app.jar
 Restart=always
