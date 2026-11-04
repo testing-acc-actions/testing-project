@@ -1,3 +1,4 @@
+
 name: Java Build, Test and Publish
 
 on:
@@ -18,9 +19,6 @@ jobs:
     name: Build, Test and Publish to CodeArtifact
     runs-on: ubuntu-latest
 
-    # Never publish packages from pull requests.
-    if: github.event_name != 'pull_request'
-
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -35,13 +33,58 @@ jobs:
       - name: Build and run unit tests
         run: mvn --batch-mode clean verify
 
+      - name: Read Maven project version
+        id: project
+        run: |
+          VERSION=$(mvn --batch-mode help:evaluate \
+            -Dexpression=project.version \
+            -q -DforceStdout)
+
+          echo "Project version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Configure AWS credentials using OIDC
+        if: github.event_name != 'pull_request'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::466210119847:role/github-java-deployment-role
           aws-region: ap-south-1
 
+      - name: Check whether Maven version already exists
+        if: github.event_name != 'pull_request'
+        id: release
+        env:
+          VERSION: ${{ steps.project.outputs.version }}
+        run: |
+          STATUS=$(aws codeartifact list-package-versions \
+            --domain employee-management-domain \
+            --domain-owner 466210119847 \
+            --repository employee-management-repo \
+            --format maven \
+            --namespace employee.management \
+            --package employee-management-app \
+            --region ap-south-1 \
+            --query "versions[?version=='${VERSION}'].status | [0]" \
+            --output text)
+
+          echo "Version: $VERSION"
+          echo "CodeArtifact status: $STATUS"
+
+          if [ "$STATUS" = "Published" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Version $VERSION is already published. Skipping deployment."
+
+          elif [ "$STATUS" = "None" ] || [ -z "$STATUS" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "New version detected. Publishing is allowed."
+
+          else
+            echo "::error::Version $VERSION already exists with status $STATUS. Manual investigation required."
+            exit 1
+          fi
+
       - name: Get CodeArtifact authorization token
+        if: steps.release.outputs.publish == 'true'
         run: |
           TOKEN=$(aws codeartifact get-authorization-token \
             --domain employee-management-domain \
@@ -54,6 +97,7 @@ jobs:
           echo "CODEARTIFACT_AUTH_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
       - name: Configure Maven authentication
+        if: steps.release.outputs.publish == 'true'
         run: |
           mkdir -p ~/.m2
 
@@ -70,12 +114,17 @@ jobs:
           EOF
 
       - name: Publish Maven package to CodeArtifact
+        if: steps.release.outputs.publish == 'true'
         run: mvn --batch-mode deploy
+
+      - name: Skip publishing existing version
+        if: steps.release.outputs.publish == 'false'
+        run: echo "Existing release detected. No duplicate deployment performed."
 
       - name: Upload application JAR
         uses: actions/upload-artifact@v4
         with:
           name: employee-management-app-${{ github.sha }}
-          path: target/employee-management-app-1.0.2.jar
+          path: target/employee-management-app-${{ steps.project.outputs.version }}.jar
           if-no-files-found: error
           retention-days: 7
