@@ -8,6 +8,6 @@ class MainTest {
 
     @Test
     void applicationVersionShouldBe100() {
-        assertEquals("1.0.1", Main.getApplicationVersion());
+        assertEquals("1.0.2", Main.getApplicationVersion());
     }
 }
