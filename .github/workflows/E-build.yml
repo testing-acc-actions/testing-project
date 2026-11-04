@@ -1,4 +1,4 @@
-name: Java Build and Test
+name: Java Build, Test and Publish
 
 on:
   push:
@@ -11,25 +11,66 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
-  build-and-test:
-    name: Build and Test Java Application
+  build-test-publish:
+    name: Build, Test and Publish to CodeArtifact
     runs-on: ubuntu-latest
+
+    # Never publish packages from pull requests.
+    if: github.event_name != 'pull_request'
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
+      - name: Set up Java 17 and Maven
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
           cache: maven
 
-      - name: Build and run tests
+      - name: Build and run unit tests
         run: mvn --batch-mode clean verify
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::466210119847:role/github-java-deployment-role
+          aws-region: ap-south-1
+
+      - name: Get CodeArtifact authorization token
+        run: |
+          TOKEN=$(aws codeartifact get-authorization-token \
+            --domain employee-management-domain \
+            --domain-owner 466210119847 \
+            --region ap-south-1 \
+            --query authorizationToken \
+            --output text)
+
+          echo "::add-mask::$TOKEN"
+          echo "CODEARTIFACT_AUTH_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Configure Maven authentication
+        run: |
+          mkdir -p ~/.m2
+
+          cat > ~/.m2/settings.xml <<'EOF'
+          <settings>
+            <servers>
+              <server>
+                <id>employee-management-domain-employee-management-repo</id>
+                <username>aws</username>
+                <password>${env.CODEARTIFACT_AUTH_TOKEN}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
+      - name: Publish Maven package to CodeArtifact
+        run: mvn --batch-mode deploy
 
       - name: Upload application JAR
         uses: actions/upload-artifact@v4
