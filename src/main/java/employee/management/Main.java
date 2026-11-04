@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 
 public class Main {
 
-    private static final String APP_VERSION = "1.0.0";
+    private static final String APP_VERSION = "1.0.1";
     private static final int PORT = 8080;
 
     public static String getApplicationVersion() {
