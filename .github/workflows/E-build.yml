@@ -1,5 +1,5 @@
 
-name: Java Build, Test and Publish
+name: Java CI - Build and Test
 
 on:
   push:
@@ -12,11 +12,10 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
-  build-test-publish:
-    name: Build, Test and Publish to CodeArtifact
+  build-and-test:
+    name: Build and run tests
     runs-on: ubuntu-latest
 
     steps:
@@ -33,159 +32,10 @@ jobs:
       - name: Build and run unit tests
         run: mvn --batch-mode clean verify
 
-      - name: Read Maven project version
-        id: project
-        run: |
-          VERSION=$(mvn --batch-mode help:evaluate \
-            -Dexpression=project.version \
-            -q -DforceStdout)
-
-          echo "Project version: $VERSION"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Configure AWS credentials using OIDC
-        if: github.event_name != 'pull_request'
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::466210119847:role/github-java-deployment-role
-          aws-region: ap-south-1
-
-      - name: Check whether Maven version already exists
-        if: github.event_name != 'pull_request'
-        id: release
-        env:
-          VERSION: ${{ steps.project.outputs.version }}
-        run: |
-          STATUS=$(aws codeartifact list-package-versions \
-            --domain employee-management-domain \
-            --domain-owner 466210119847 \
-            --repository employee-management-repo \
-            --format maven \
-            --namespace employee.management \
-            --package employee-management-app \
-            --region ap-south-1 \
-            --query "versions[?version=='${VERSION}'].status | [0]" \
-            --output text)
-
-          echo "Version: $VERSION"
-          echo "CodeArtifact status: $STATUS"
-
-          if [ "$STATUS" = "Published" ]; then
-            echo "publish=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Version $VERSION is already published. Skipping deployment."
-
-          elif [ "$STATUS" = "None" ] || [ -z "$STATUS" ]; then
-            echo "publish=true" >> "$GITHUB_OUTPUT"
-            echo "New version detected. Publishing is allowed."
-
-          else
-            echo "::error::Version $VERSION already exists with status $STATUS. Manual investigation required."
-            exit 1
-          fi
-
-      - name: Get CodeArtifact authorization token
-        if: steps.release.outputs.publish == 'true'
-        run: |
-          TOKEN=$(aws codeartifact get-authorization-token \
-            --domain employee-management-domain \
-            --domain-owner 466210119847 \
-            --region ap-south-1 \
-            --query authorizationToken \
-            --output text)
-
-          echo "::add-mask::$TOKEN"
-          echo "CODEARTIFACT_AUTH_TOKEN=$TOKEN" >> "$GITHUB_ENV"
-
-      - name: Configure Maven authentication
-        if: steps.release.outputs.publish == 'true'
-        run: |
-          mkdir -p ~/.m2
-
-          cat > ~/.m2/settings.xml <<'EOF'
-          <settings>
-            <servers>
-              <server>
-                <id>employee-management-domain-employee-management-repo</id>
-                <username>aws</username>
-                <password>${env.CODEARTIFACT_AUTH_TOKEN}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
-
-      - name: Publish Maven package to CodeArtifact
-        if: steps.release.outputs.publish == 'true'
-        run: mvn --batch-mode deploy
-
-      - name: Skip publishing existing version
-        if: steps.release.outputs.publish == 'false'
-        run: echo "Existing release detected. No duplicate deployment performed."
-
       - name: Upload application JAR
         uses: actions/upload-artifact@v4
         with:
           name: employee-management-app-${{ github.sha }}
-          path: target/employee-management-app-${{ steps.project.outputs.version }}.jar
+          path: target/employee-management-app-1.0.2.jar
           if-no-files-found: error
           retention-days: 7
-      - name: Prepare CodeDeploy deployment bundle
-        run: |
-          chmod +x scripts/*.sh
-
-          mkdir -p deployment
-
-          cp appspec.yml deployment/
-          cp target/employee-management-app-${{ steps.project.outputs.version }}.jar \
-            deployment/employee-management-app.jar
-
-          cp -r scripts deployment/
-
-          cd deployment
-          zip -r ../employee-management-deployment.zip .
-
-      - name: Upload CodeDeploy bundle to S3
-        if: github.event_name != 'pull_request'
-        run: |
-          aws s3 cp employee-management-deployment.zip \
-            s3://employee-management-deployment-466210119847/employee-management-app/${{ github.sha }}/employee-management-deployment.zip \
-            --region ap-south-1
-      - name: Deploy application to EC2
-        if: github.event_name != 'pull_request'
-        id: deploy
-        run: |
-          DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name employee-management-app \
-            --deployment-group-name employee-management-ec2-group \
-            --s3-location bucket=employee-management-deployment-466210119847,key=employee-management-app/${{ github.sha }}/employee-management-deployment.zip,bundleType=zip \
-            --file-exists-behavior OVERWRITE \
-            --description "GitHub Actions deployment ${{ github.sha }}" \
-            --region ap-south-1 \
-            --query deploymentId \
-            --output text)
-
-          echo "Deployment ID: $DEPLOYMENT_ID"
-
-          for attempt in $(seq 1 60); do
-            STATUS=$(aws deploy get-deployment \
-              --deployment-id "$DEPLOYMENT_ID" \
-              --region ap-south-1 \
-              --query deploymentInfo.status \
-              --output text)
-
-            echo "Attempt $attempt: $STATUS"
-
-            if [ "$STATUS" = "Succeeded" ]; then
-              echo "Deployment completed successfully."
-              exit 0
-            fi
-
-            if [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Stopped" ]; then
-              echo "::error::Deployment failed: $STATUS"
-              exit 1
-            fi
-
-            sleep 10
-          done
-
-          echo "::error::Deployment timed out."
-          exit 1
